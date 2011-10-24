@@ -3,7 +3,7 @@ require "spec_helper"
 describe LetterOpener::DeliveryMethod do
   before(:each) do
     Launchy.stub(:open)
-    location = File.expand_path('../../../../tmp/letter_opener', __FILE__)
+    location = File.expand_path('../../../tmp/letter_opener', __FILE__)
     FileUtils.rm_rf(location)
     Mail.defaults do
       delivery_method LetterOpener::DeliveryMethod, :location => location
@@ -45,5 +45,26 @@ describe LetterOpener::DeliveryMethod do
     html = File.read(Dir["#{@location}/*/rich.html"].first)
     html.should include("View plain text version")
     html.should include("<h1>This is HTML</h1>")
+  end
+
+  describe 'still works when we cannot write to the file system (i.e. heroku)' do
+    before do
+      LetterOpener.cannot_write_to_file_system!
+      Launchy.should_not_receive(:open)
+      mail = Mail.deliver do
+        from    'foo@example.com'
+        to      'bar@example.com'
+        subject 'Hello'
+        body    'World!'
+      end
+    end
+    subject { LetterOpener::Letter.all.first }
+    it 'should not have saved on our real file system' do
+      File.exists?(subject.filepath).should be_false
+    end
+    its(:contents) { should include("foo@example.com") }
+    its(:contents) { should include("bar@example.com") }
+    its(:contents) { should include("Hello") }
+    its(:contents) { should include("World!") }
   end
 end
