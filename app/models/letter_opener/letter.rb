@@ -8,10 +8,12 @@ module LetterOpener
     end
     
     def self.all
-      letters = Dir.glob("#{LetterOpener.letters_location}/*").map do |folder|
-        new :name => File.basename(folder), :updated_at => File.mtime(folder)
+      LetterOpener.on_file_system do
+        letters = Dir.glob("#{LetterOpener.letters_location}/*").map do |folder|
+          new :name => File.basename(folder), :updated_at => File.mtime(folder)
+        end
+        letters.sort_by(&:updated_at).reverse
       end
-      letters.sort_by(&:updated_at).reverse
     end
     
     def self.find_by_name(name)
@@ -19,7 +21,9 @@ module LetterOpener
     end
     
     def contents(style = :plain)
-      File.read("#{LetterOpener.letters_location}/#{name}/#{style}.html")
+      LetterOpener.on_file_system do
+        File.read("#{LetterOpener.letters_location}/#{name}/#{style}.html")
+      end
     end
   end
 end

@@ -9,9 +9,12 @@ module LetterOpener
     end
 
     def render
-      FileUtils.mkdir_p(@location)
-      File.open(filepath, 'w') do |f|
-        f.write ERB.new(template).result(binding)
+      contents = ERB.new(template).result(binding)
+      LetterOpener.on_file_system do
+        FileUtils.mkdir_p(@location)
+        File.open(filepath, 'w') do |f|
+          f.write contents
+        end
       end
     end
 
