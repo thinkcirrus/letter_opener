@@ -1,11 +1,10 @@
 module LetterOpener
   class Letter
-    attr_accessor :name, :updated_at, :style
+    attr_accessor :name, :updated_at
 
     def initialize(attributes)
       @name = attributes[:name]
       @updated_at = attributes[:updated_at]
-      @style = detect_style()
     end
 
     def self.all
@@ -21,6 +20,14 @@ module LetterOpener
       new(:name => name)
     end
 
+    def default_style
+      @default_style ||= begin
+        [:plain, :rich].detect do |style|
+          File.exist? filepath(style)
+        end
+      end
+    end
+
     def filepath(style = :plain)
       "#{LetterOpener.letters_location}/#{name}/#{style}.html"
     end
@@ -28,14 +35,6 @@ module LetterOpener
     def contents(style = :plain)
       LetterOpener.on_file_system do
         File.read(filepath(style))
-      end
-    end
-
-    def detect_style()
-      LetterOpener.on_file_system do
-        return :rich if File.exist?(filepath(:rich))
-        return :plain if File.exist?(filepath(:plain))
-        return :unknown
       end
     end
   end
